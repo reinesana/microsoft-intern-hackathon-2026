@@ -16,14 +16,13 @@ USAGE:
         print(start, text)
 """
 
-# Steers the transcription model toward a faithful, word-for-word transcript of
-# dialect speech instead of normalizing it to standard English.
+# Whisper's `prompt` biases vocabulary/spelling toward what it "expects" to
+# hear. We feed it a short sample of dialect terms (NOT an instruction — long
+# instructional prompts get echoed verbatim when a clip is quiet) so it spells
+# AAVE / Southern speech faithfully instead of normalizing it.
 _VERBATIM_PROMPT = (
-    "Verbatim transcript of a 911 emergency call between a Black caller and a "
-    "dispatcher. Transcribe exactly what is said, word for word, preserving "
-    "African American Vernacular English (AAVE), Southern, and regional "
-    "dialect, grammar, and slang (e.g. 'finna', 'fell out', 'he been low'). Do "
-    "not correct, standardize, paraphrase, or clean up the speaker's words."
+    "finna, fixing to, fell out, he been low, his sugar, ain't breathin' right, "
+    "come to, won't come to, naw, y'all, lemme, gimme"
 )
 
 

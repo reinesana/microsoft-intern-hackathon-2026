@@ -2,19 +2,23 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const RISK_LEVELS = [
-  { key: 'low', label: 'Low', active: 'bg-emerald-500 text-white', ring: 'ring-emerald-400/40 text-emerald-300' },
-  { key: 'moderate', label: 'Moderate', active: 'bg-amber-500 text-slate-900', ring: 'ring-amber-400/40 text-amber-300' },
-  { key: 'high', label: 'High', active: 'bg-orange-500 text-white', ring: 'ring-orange-400/40 text-orange-300' },
-  { key: 'critical', label: 'Critical', active: 'bg-rose-600 text-white', ring: 'ring-rose-400/40 text-rose-300' },
+  { key: 'low', label: 'Low', active: 'bg-emerald-500 text-white', ring: 'ring-emerald-300 text-emerald-600' },
+  { key: 'moderate', label: 'Moderate', active: 'bg-amber-500 text-white', ring: 'ring-amber-300 text-amber-600' },
+  { key: 'high', label: 'High', active: 'bg-orange-500 text-white', ring: 'ring-orange-300 text-orange-600' },
+  { key: 'critical', label: 'Critical', active: 'bg-rose-600 text-white', ring: 'ring-rose-300 text-rose-600' },
 ];
 
 function Field({ label, value }) {
   return (
-    <div>
-      <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{label}</div>
-      <div className={`text-[13px] leading-snug ${value ? 'text-slate-100' : 'text-slate-600'}`}>
+    <div className="flex items-start justify-between gap-3 px-3 py-2">
+      <span className="shrink-0 text-[11px] font-medium text-zinc-400">{label}</span>
+      <span
+        className={`text-right text-[12.5px] leading-snug ${
+          value ? 'text-zinc-800' : 'text-zinc-300'
+        }`}
+      >
         {value || '—'}
-      </div>
+      </span>
     </div>
   );
 }
@@ -29,6 +33,7 @@ export default function ReportPopup({
   onClose,
   entities,
   callerLocation,
+  auto,
   risk,
   onRiskChange,
   suggestedRisk,
@@ -36,52 +41,71 @@ export default function ReportPopup({
   onReportChange,
   onExport,
 }) {
-  const location = callerLocation?.label || (entities.location || [])[0]?.phrase || '';
-  const patient = (entities.medical || []).map((e) => e.meaning).join('; ');
-  const action = (entities.intent || []).map((e) => e.meaning).join('; ');
-  const hazard = (entities.vehicle || []).map((e) => e.meaning).join('; ');
+  const a = auto || {};
+  const location =
+    a.location || callerLocation?.label || (entities.location || [])[0]?.phrase || '';
+  const patient = a.patient || (entities.medical || []).map((e) => e.meaning).join('; ');
+  const action = a.caller_action || (entities.intent || []).map((e) => e.meaning).join('; ');
+  const hazard = a.hazards || (entities.vehicle || []).map((e) => e.meaning).join('; ');
   const flags = ['location', 'medical', 'intent', 'vehicle']
     .flatMap((c) => entities[c] || [])
     .filter((e) => e.aave);
+
+  const caseId = React.useMemo(
+    () => `CAD-${new Date().getFullYear()}-${Math.floor(Math.random() * 9000) + 1000}`,
+    [],
+  );
+  const openedAt = React.useMemo(
+    () => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    [],
+  );
+  const suggestedLabel = RISK_LEVELS.find((l) => l.key === suggestedRisk)?.label;
 
   return (
     <AnimatePresence>
       {open && (
         <motion.div
-          initial={{ opacity: 0, y: 20, scale: 0.96 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 20, scale: 0.96 }}
+          initial={{ opacity: 0, x: 16 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: 16 }}
           transition={{ duration: 0.2 }}
-          className="absolute bottom-4 right-4 z-40 flex max-h-[88%] w-80 flex-col overflow-hidden rounded-xl border border-slate-700 bg-slate-900/95 shadow-2xl backdrop-blur"
+          className="flex h-full w-full flex-col overflow-hidden bg-white"
         >
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-slate-800 px-4 py-2.5">
-            <div className="flex items-center gap-2">
-              <span className="flex h-2 w-2 animate-pulse rounded-full bg-indigo-400" />
-              <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-200">
-                Incident Report
-              </h2>
+          <div className="flex items-start justify-between border-b border-zinc-200 px-4 py-3">
+            <div>
+              <h2 className="text-[13px] font-semibold text-zinc-900">Incident Report</h2>
+              <p className="mt-0.5 font-mono text-[10px] tracking-tight text-zinc-400">
+                {caseId} · {openedAt}
+              </p>
             </div>
             <button
               onClick={onClose}
-              className="rounded p-1 text-slate-500 hover:bg-slate-800 hover:text-slate-200"
+              className="-mr-1 rounded-md p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700"
               title="Close"
             >
               ✕
             </button>
           </div>
 
-          <div className="flex-1 space-y-3 overflow-y-auto px-4 py-3">
-            {/* Risk category */}
+          <div className="flex-1 space-y-4 overflow-y-auto px-4 py-4">
+            {/* Agent summary */}
+            {a.summary && (
+              <div className="rounded-xl bg-blue-50/70 px-3 py-2 text-[12px] leading-snug text-blue-900 ring-1 ring-blue-100">
+                {a.summary}
+              </div>
+            )}
+
+            {/* Priority */}
             <div>
-              <div className="mb-1.5 flex items-center justify-between text-[10px] font-semibold uppercase tracking-wide text-slate-500">
-                <span>Risk Category</span>
+              <div className="mb-1.5 flex items-center justify-between">
+                <span className="text-[11px] font-medium text-zinc-500">Priority</span>
                 {suggestedRisk && suggestedRisk !== risk && (
                   <button
                     onClick={() => onRiskChange(suggestedRisk)}
-                    className="text-[10px] font-medium text-indigo-300 hover:text-indigo-200"
+                    className="text-[11px] font-medium text-blue-600 hover:text-blue-500"
                   >
-                    Suggest: {suggestedRisk}
+                    Suggested: {suggestedLabel}
                   </button>
                 )}
               </div>
@@ -90,8 +114,8 @@ export default function ReportPopup({
                   <button
                     key={lvl.key}
                     onClick={() => onRiskChange(lvl.key)}
-                    className={`rounded-md px-1 py-1.5 text-[11px] font-semibold ring-1 transition ${
-                      risk === lvl.key ? `${lvl.active} ring-transparent` : `bg-slate-800/60 ${lvl.ring}`
+                    className={`rounded-lg px-1 py-2 text-[11px] font-semibold ring-1 transition ${
+                      risk === lvl.key ? `${lvl.active} ring-transparent` : `bg-white ${lvl.ring}`
                     }`}
                   >
                     {lvl.label}
@@ -101,27 +125,28 @@ export default function ReportPopup({
             </div>
 
             {/* Auto-filled structured fields */}
-            <div className="grid grid-cols-1 gap-2 rounded-lg border border-slate-800 bg-slate-950/40 p-3">
-              <Field label="Location" value={location} />
-              <Field label="Patient" value={patient} />
-              <Field label="Caller action" value={action} />
-              <Field label="On scene / hazard" value={hazard} />
+            <div>
+              <div className="mb-1.5 text-[11px] font-medium text-zinc-500">Details</div>
+              <div className="divide-y divide-zinc-100 rounded-xl border border-zinc-200">
+                <Field label="Location" value={location} />
+                <Field label="Patient" value={patient} />
+                <Field label="Caller action" value={action} />
+                <Field label="On scene / hazard" value={hazard} />
+              </div>
             </div>
 
             {/* Dialect flags */}
             {flags.length > 0 && (
               <div>
-                <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-amber-300">
-                  Dialect flags
-                </div>
+                <div className="mb-1.5 text-[11px] font-medium text-zinc-500">Dialect flags</div>
                 <div className="flex flex-wrap gap-1.5">
                   {flags.map((f) => (
                     <span
                       key={f.phrase}
                       title={f.meaning}
-                      className="rounded border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.5 text-[11px] text-amber-200"
+                      className="rounded-md border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[11px] text-zinc-600"
                     >
-                      “{f.phrase}” · {f.type || 'dialect'}
+                      “{f.phrase}”
                     </span>
                   ))}
                 </div>
@@ -130,24 +155,22 @@ export default function ReportPopup({
 
             {/* Free-text notes */}
             <div>
-              <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
-                Notes
-              </div>
+              <div className="mb-1.5 text-[11px] font-medium text-zinc-500">Notes</div>
               <textarea
                 value={report}
                 onChange={(e) => onReportChange(e.target.value)}
                 placeholder="Add dispatcher notes…"
-                className="min-h-[64px] w-full resize-none rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-[13px] leading-relaxed text-slate-100 placeholder:text-slate-600 focus:border-indigo-500 focus:outline-none"
+                className="min-h-[64px] w-full resize-none rounded-xl border border-zinc-200 bg-white px-3 py-2 text-[13px] leading-relaxed text-zinc-800 placeholder:text-zinc-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/15"
               />
             </div>
           </div>
 
-          <div className="border-t border-slate-800 px-4 py-2.5">
+          <div className="border-t border-zinc-200 px-4 py-3">
             <button
               onClick={onExport}
-              className="w-full rounded-md bg-indigo-600 py-1.5 text-[12px] font-semibold text-white transition hover:bg-indigo-500"
+              className="w-full rounded-lg bg-blue-600 py-2 text-[12px] font-semibold text-white transition hover:bg-blue-500"
             >
-              ⤓ Export Dispatch Log
+              Export Dispatch Log
             </button>
           </div>
         </motion.div>

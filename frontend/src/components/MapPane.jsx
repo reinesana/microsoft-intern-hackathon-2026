@@ -32,8 +32,8 @@ export default function MapPane({ center, emsUnits, callerLocation, flyTarget })
         className="h-full w-full"
       >
         <TileLayer
-          attribution='&copy; OpenStreetMap'
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+          attribution='&copy; OpenStreetMap contributors &copy; CARTO'
+          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
         />
 
         <FlyTo target={flyTarget} />
@@ -68,16 +68,16 @@ export default function MapPane({ center, emsUnits, callerLocation, flyTarget })
         )}
       </MapContainer>
 
-      <div className="pointer-events-none absolute left-4 top-4 z-[500] rounded-lg border border-slate-700 bg-slate-900/85 px-3 py-2 backdrop-blur">
-        <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+      <div className="pointer-events-none absolute left-4 top-4 z-[500] rounded-lg border border-zinc-200 bg-white/90 px-3 py-2 shadow-sm backdrop-blur">
+        <div className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
           Command Map
         </div>
-        <div className="mt-1 flex items-center gap-3 text-[11px] text-slate-300">
+        <div className="mt-1 flex items-center gap-3 text-[11px] text-zinc-600">
           <span className="flex items-center gap-1">
-            <span className="h-2.5 w-2.5 rounded-full bg-indigo-400" /> EMS unit
+            <span className="h-2.5 w-2.5 rounded-full bg-indigo-500" /> EMS unit
           </span>
           <span className="flex items-center gap-1">
-            <span className="h-2.5 w-2.5 rounded-full bg-rose-400" /> Caller
+            <span className="h-2.5 w-2.5 rounded-full bg-rose-500" /> Caller
           </span>
         </div>
       </div>

@@ -47,7 +47,7 @@ app.add_middleware(
 )
 
 # The real 911 audio clip and a disk cache for its transcript.
-AUDIO_PATH = Path("audio_callls/audiowav.mp3")
+AUDIO_PATH = Path("audio_callls/audio_wav2.mp4")
 TRANSCRIPT_CACHE = Path("data/transcript.json")
 
 # OpenAI client lives for the lifetime of the server.
@@ -252,7 +252,7 @@ def make_report(payload: dict):
 @app.get("/api/audio")
 def get_audio():
     """Serve the raw 911 audio clip for playback in the UI."""
-    return FileResponse(str(AUDIO_PATH), media_type="audio/mpeg")
+    return FileResponse(str(AUDIO_PATH), media_type="audio/mp4")
 
 
 @app.get("/")

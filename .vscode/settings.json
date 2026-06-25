@@ -1,0 +1,12 @@
+{
+  // Backend: auto-select + activate the venv so `python main.py` just works
+  // in any new integrated terminal.
+  "python.defaultInterpreterPath": "${workspaceFolder}/backend/.venv/Scripts/python.exe",
+  "python.terminal.activateEnvironment": true,
+
+  // Frontend: put the portable Node install on PATH for every integrated
+  // terminal so `npm run dev` works without any manual setup.
+  "terminal.integrated.env.windows": {
+    "PATH": "C:\\Users\\t-shnursoo\\AppData\\Local\\node-portable\\node-v24.18.0-win-x64;${env:PATH}"
+  }
+}

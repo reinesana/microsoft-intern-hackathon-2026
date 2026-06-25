@@ -26,7 +26,6 @@ const TYPE_MS = 38; // per-character typing speed
  * flooded with highlights while it's still being "spoken".
  */
 export default function TranscriptLine({ line, onLocate }) {
-  const isCaller = line.speaker === 'Caller';
   const full = line.text;
   const [typed, setTyped] = useState(0);
   const done = typed >= full.length;
@@ -56,42 +55,32 @@ export default function TranscriptLine({ line, onLocate }) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25 }}
-      className={`flex ${isCaller ? 'justify-start' : 'justify-end'}`}
+      className="flex flex-col"
     >
-      <div
-        className={`max-w-[88%] rounded-2xl px-4 py-2.5 ${
-          isCaller
-            ? 'rounded-tl-sm bg-slate-800/80 ring-1 ring-slate-700'
-            : 'rounded-tr-sm bg-indigo-950/60 ring-1 ring-indigo-800/60'
-        }`}
-      >
-        <div
-          className={`mb-0.5 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wider ${
-            isCaller ? 'text-rose-300' : 'text-indigo-300'
-          }`}
-        >
-          <span>{line.speaker}</span>
-          <span className="font-mono text-[9px] font-normal text-slate-500">{stamp}</span>
-        </div>
-        <div className="text-[15px] leading-relaxed text-slate-100">
-          {done ? (
-            segments.map((seg, i) =>
-              seg.tag ? (
-                <Tag key={i} tag={seg.tag} onLocate={onLocate} />
-              ) : (
-                <span key={i}>{seg.text}</span>
-              )
+      <div className="mb-1 flex items-baseline gap-2">
+        <span className="text-[15px] font-bold tracking-tight text-zinc-900">
+          {line.speaker}
+        </span>
+        <span className="font-mono text-xs text-zinc-400">{stamp}</span>
+      </div>
+      <div className="text-[15px] leading-relaxed text-zinc-700">
+        {done ? (
+          segments.map((seg, i) =>
+            seg.tag ? (
+              <Tag key={i} tag={seg.tag} onLocate={onLocate} />
+            ) : (
+              <span key={i}>{seg.text}</span>
             )
-          ) : (
-            <span>
-              {full.slice(0, typed)}
-              <span className="ml-0.5 inline-block w-1.5 animate-pulse text-slate-400">▋</span>
-            </span>
-          )}
-        </div>
+          )
+        ) : (
+          <span>
+            {full.slice(0, typed)}
+            <span className="ml-0.5 inline-block w-1.5 animate-pulse text-zinc-400">▋</span>
+          </span>
+        )}
       </div>
     </motion.div>
   );

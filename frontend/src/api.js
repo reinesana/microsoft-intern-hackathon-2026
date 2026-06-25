@@ -25,3 +25,15 @@ export async function tagText(text) {
   if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
   return res.json();
 }
+
+// Agent-generated structured incident report from the revealed transcript.
+// `lines` is an array of { speaker, text }. Returns the structured fields.
+export async function getReport(lines) {
+  const res = await fetch(`${BASE}/report`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ lines }),
+  });
+  if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+  return res.json();
+}
