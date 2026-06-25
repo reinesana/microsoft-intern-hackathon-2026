@@ -86,3 +86,11 @@ ADDRESSES = {
         "label": "1420 Pine Street, Apt 3B, Atlanta, GA",
     },
 }
+
+# Semantic category -> UI color name (the frontend maps these to its palette).
+CATEGORY_COLORS = {
+    "location": "blue",
+    "medical": "green",
+    "intent": "purple",
+    "vehicle": "yellow",
+}

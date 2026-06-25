@@ -1,39 +1,45 @@
 """
 DESCRIPTION:
-    Speech-to-text via the OpenAI Whisper API.
+    Speech-to-text via OpenAI Whisper (`whisper-1`), called with the OpenAI
+    client.
 
-    `transcribe` sends an audio file to Whisper and yields each recognized
-    segment with its start time, matching the (offset_seconds, text) interface
+    `transcribe` sends an audio file to the model and yields the recognized
+    text split into sentence-sized lines, matching the (start, text) interface
     the rest of the app expects.
 
 USAGE:
     from speech import transcribe
+    from client import make_client, TRANSCRIBE_MODEL
 
-    for offset_seconds, text in transcribe("path/to/audio.wav"):
-        print(offset_seconds, text)
-
-    Requires OPENAI_API_KEY in the environment (loaded from .env by the caller).
+    client = make_client()
+    for start, text in transcribe(client, TRANSCRIBE_MODEL, "path/to/audio.mp3"):
+        print(start, text)
 """
 
-import os
+# Steers the transcription model toward a faithful, word-for-word transcript of
+# dialect speech instead of normalizing it to standard English.
+_VERBATIM_PROMPT = (
+    "Verbatim transcript of a 911 emergency call between a Black caller and a "
+    "dispatcher. Transcribe exactly what is said, word for word, preserving "
+    "African American Vernacular English (AAVE), Southern, and regional "
+    "dialect, grammar, and slang (e.g. 'finna', 'fell out', 'he been low'). Do "
+    "not correct, standardize, paraphrase, or clean up the speaker's words."
+)
 
-from openai import OpenAI
 
-
-def transcribe(audio_path):
-    """Transcribe an audio file with Whisper.
-
-    Yields (offset_seconds, text) for each segment Whisper returns.
-    """
-    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
+def transcribe(client, model, audio_path):
+    """Transcribe an audio file and yield (start_seconds, text) per segment."""
     with open(audio_path, "rb") as audio_file:
         result = client.audio.transcriptions.create(
-            model=os.getenv("OPENAI_TRANSCRIBE_MODEL", "whisper-1"),
+            model=model,
             file=audio_file,
             response_format="verbose_json",
+            prompt=_VERBATIM_PROMPT,
         )
 
     for segment in result.segments:
-        yield segment.start, segment.text.strip()
+        text = segment.text.strip()
+        if text:
+            yield segment.start, text
+
 

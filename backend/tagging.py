@@ -8,20 +8,12 @@ DESCRIPTION:
     original words.
 
 USAGE:
-    from tagging import tag_line, CATEGORY_COLORS
+    from tagging import tag_line
 """
 
 import re
 
 from rulebook import ADDRESSES, RULEBOOK
-
-# Semantic category -> UI color name (the frontend maps these to its palette).
-CATEGORY_COLORS = {
-    "location": "blue",
-    "medical": "green",
-    "intent": "purple",
-    "vehicle": "yellow",
-}
 
 # Matches things like "1420 Pine Street" or "55 Oak Ave".
 _ADDRESS_RE = re.compile(
