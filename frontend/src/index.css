@@ -1,0 +1,29 @@
+/* Leaflet base styles (must precede Tailwind directives per CSS @import rules). */
+@import 'leaflet/dist/leaflet.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  background: #020617;
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+/* Dark-mode tweaks for the Leaflet map surface. */
+.leaflet-container {
+  background: #0b1220;
+}
+
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  background: #1e293b;
+  color: #e2e8f0;
+}

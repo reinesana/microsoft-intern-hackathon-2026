@@ -1,64 +1,39 @@
 """
 DESCRIPTION:
-    Live speech-to-text via Azure AI Speech.
+    Speech-to-text via the OpenAI Whisper API.
 
-    `transcribe` runs continuous recognition on a WAV file and yields each
-    recognized segment as it arrives.
+    `transcribe` sends an audio file to Whisper and yields each recognized
+    segment with its start time, matching the (offset_seconds, text) interface
+    the rest of the app expects.
 
 USAGE:
     from speech import transcribe
 
     for offset_seconds, text in transcribe("path/to/audio.wav"):
         print(offset_seconds, text)
+
+    Requires OPENAI_API_KEY in the environment (loaded from .env by the caller).
 """
 
 import os
-import queue
-import threading
 
-import azure.cognitiveservices.speech as speechsdk
+from openai import OpenAI
 
 
 def transcribe(audio_path):
-    """Transcribe a WAV file with Azure AI Speech (continuous mode).
+    """Transcribe an audio file with Whisper.
 
-    Yields (offset_seconds, text) for each recognized utterance as it arrives.
+    Yields (offset_seconds, text) for each segment Whisper returns.
     """
-    speech_config = speechsdk.SpeechConfig(
-        subscription=os.getenv("AZURE_SPEECH_KEY"),
-        region=os.getenv("AZURE_SPEECH_REGION"),
-    )
+    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-    audio_config = speechsdk.audio.AudioConfig(filename=audio_path)
-    recognizer = speechsdk.SpeechRecognizer(
-        speech_config=speech_config,
-        audio_config=audio_config,
-    )
+    with open(audio_path, "rb") as audio_file:
+        result = client.audio.transcriptions.create(
+            model=os.getenv("OPENAI_TRANSCRIBE_MODEL", "whisper-1"),
+            file=audio_file,
+            response_format="verbose_json",
+        )
 
-    segment_queue: queue.Queue = queue.Queue()
-    done = threading.Event()
+    for segment in result.segments:
+        yield segment.start, segment.text.strip()
 
-    def on_recognized(evt):
-        if evt.result.text:
-            offset_seconds = evt.result.offset / 10_000_000
-            segment_queue.put((offset_seconds, evt.result.text))
-
-    def on_stopped(evt):
-        done.set()
-
-    recognizer.recognized.connect(on_recognized)
-    recognizer.session_stopped.connect(on_stopped)
-    recognizer.canceled.connect(on_stopped)
-
-    recognizer.start_continuous_recognition()
-
-    while not done.is_set():
-        try:
-            yield segment_queue.get(timeout=0.1)
-        except queue.Empty:
-            continue
-
-    while not segment_queue.empty():
-        yield segment_queue.get()
-
-    recognizer.stop_continuous_recognition()

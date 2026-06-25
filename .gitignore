@@ -1,0 +1,37 @@
+# ---------- Node / frontend ----------
+node_modules/
+dist/
+build/
+.vite/
+*.local
+
+# ---------- Python / backend ----------
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+
+# ---------- Secrets / env ----------
+.env
+.env.local
+.env.*.local
+
+# ---------- Audio / data ----------
+backend/data/*.wav
+backend/data/*.mp3
+backend/data/*.m4a
+backend/data/*.flac
+backend/data/*.ogg
+
+# ---------- Editor / OS ----------
+.DS_Store
+Thumbs.db
+.idea/
+*.log
