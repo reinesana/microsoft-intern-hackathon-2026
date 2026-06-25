@@ -10,8 +10,8 @@ USAGE:
 
 # Initial map view (downtown Atlanta) before any address is extracted.
 SCENARIO = {
-    "id": "cardiac-pine-st",
-    "title": "Unconscious Male — Possible Cardiac / Diabetic",
+    "id": "covert-domestic",
+    "title": "Disguised Call — Caller May Not Be Able to Speak Freely",
     "center": {"lat": 33.749, "lng": -84.388},
     # Mock EMS units shown on the map near the scene.
     "ems_units": [
