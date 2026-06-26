@@ -43,32 +43,11 @@ TrueVoice is built to align with Microsoft's Responsible AI principles and its e
 - **Transparency & Accountability** — keep every interpretation explainable and auditable, end to end, with the dispatcher in control.
 - **Reliability & Safety** — pilot with a real PSAP, integrate with existing CAD systems, and connect a live streaming ASR feed.
 
-## 🏗️ Architecture
-
-```
-backend/           FastAPI service
-  app.py           API: /api/scenario, /api/audio/{demo}, /api/tag, /api/report, /api/export
-  client.py        OpenAI client (Whisper + GPT-4o)
-  speech.py        Whisper transcription
-  agent.py         live dialect-interpreter agent
-  tagging.py       deterministic rulebook tagging
-  rulebook.py      dialect/slang phrase rulebook
-  scenario.py      fallback scenario for the CLI
-  main.py          standalone CLI
-  data/            cached transcripts
-  audio_callls/    call recordings
-frontend/          React + Vite + Tailwind + Framer Motion + react-leaflet
-  src/App.jsx      app shell, playback, state
-  src/api.js       backend client
-  src/sentiment.js caller-sentiment estimate
-  src/components/   MapPane, TranscriptPane, TranscriptLine, Tag, ReportPopup, PlaybackControls
-```
-
-## ▶️ Run
+##  Run
 
 Set `OPENAI_API_KEY` in `backend/.env`.
 
-### Backend (FastAPI on :8000)
+### Backend
 
 ```powershell
 cd backend
@@ -76,7 +55,7 @@ python -m pip install -r requirements.txt
 python -m uvicorn app:app --reload --port 8000
 ```
 
-### Frontend (Vite on :5173)
+### Frontend
 
 Requires Node.js 18+.
 
@@ -86,17 +65,8 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:5173. Vite proxies `/api` → the backend.
 
-## 🎬 Demo
-
-Pick a call from **Incoming Calls** (Kenneth Walker — a real shooting report; or the disguised "3 year old" call) and hit **▶ Play**. The audio streams with a synced, speaker-labeled transcript.
-
-Toggle **Interpretation**:
-- **Off** — the raw transcript, including the words a standard system mishears (flagged low-confidence).
-- **On** — the agent recovers and explains those words, fills the incident report, flags under-triage risk, escalates priority, and flies the map to the caller's location.
-
-## 📚 References
+## References
 
 - Koenecke et al. (2020), *Racial disparities in automated speech recognition*, **PNAS**.
 - Koenecke et al. (2024), *Careless Whisper: Speech-to-Text Hallucination Harms*, **ACM FAccT**.
