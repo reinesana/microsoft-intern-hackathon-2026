@@ -20,11 +20,8 @@ function segmentize(text, tags) {
 
 const TYPE_MS = 38; // per-character typing speed
 
-/**
- * One line of the live transcript. The text types out first (plain), then the
- * interpretive highlights appear once the line finishes — so the screen isn't
- * flooded with highlights while it's still being "spoken".
- */
+// One transcript line: text types out first, then the highlights appear once
+// the line finishes.
 export default function TranscriptLine({ line, onLocate }) {
   const full = line.text;
   const [typed, setTyped] = useState(0);
@@ -61,12 +58,12 @@ export default function TranscriptLine({ line, onLocate }) {
       className="flex flex-col"
     >
       <div className="mb-1 flex items-baseline gap-2">
-        <span className="text-[15px] font-bold tracking-tight text-zinc-900">
+        <span className="text-[14px] font-bold tracking-tight text-zinc-900">
           {line.speaker}
         </span>
         <span className="font-mono text-xs text-zinc-400">{stamp}</span>
       </div>
-      <div className="text-[15px] leading-relaxed text-zinc-700">
+      <div className="text-[14px] leading-relaxed text-zinc-700">
         {done ? (
           segments.map((seg, i) =>
             seg.tag ? (

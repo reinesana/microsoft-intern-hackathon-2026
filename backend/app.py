@@ -1,26 +1,11 @@
-"""
-DESCRIPTION:
-    FastAPI backend for Aegis Dispatch. Transcribes the real 911 audio clip with
-    OpenAI Whisper, streams those lines into the UI, tags any transcript line
-    live through the OpenAI AAVE dispatch tagger, and exports a clean dispatch
-    log.
+"""TrueVoice backend. Transcribes 911 audio with Whisper, streams the lines,
+tags dialect live, builds a comparative incident report, and serves a map.
 
-    The OpenAI client is created once at startup and lives for the lifetime of
-    the server. The transcript is cached to disk so the server doesn't re-bill
-    Whisper on every reload. Kept deliberately simple: plain functions, plain
-    dicts, no classes.
-
-USAGE:
-    uvicorn app:app --reload --port 8000
-
-    Endpoints:
-        GET  /api/scenario   transcript lines (from the real audio) + EMS units
-        GET  /api/export     downloadable dispatch log (tags grouped by entity)
-        GET  /api/audio      the raw 911 audio clip (for playback)
-        POST /api/tag        live AAVE agent tagging for one transcript line
+Run: uvicorn app:app --reload --port 8000
 """
 
 import json
+import time
 from pathlib import Path
 
 from fastapi import FastAPI
@@ -29,7 +14,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
 from client import make_client, CHAT_MODEL, TRANSCRIBE_MODEL
-from scenario import SCENARIO
 from rulebook import CATEGORY_COLORS
 from tagging import tag_line as rulebook_tags
 from agent import tag_line as agent_tags
@@ -37,7 +21,7 @@ from speech import transcribe
 
 load_dotenv()
 
-app = FastAPI(title="Aegis Dispatch API")
+app = FastAPI(title="TrueVoice API")
 
 app.add_middleware(
     CORSMiddleware,
@@ -46,16 +30,45 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# The real 911 audio clip and a disk cache for its transcript.
-AUDIO_PATH = Path("audio_callls/audio_wav2.mp4")
-TRANSCRIPT_CACHE = Path("data/transcript.json")
+# Selectable demo calls; each transcript is cached to disk.
+DEMOS = {
+    "kenneth": {
+        "id": "kenneth-walker",
+        "title": "Live 911 Call — Shooting Reported",
+        "audio": Path("audio_callls/audio_kennethwalker.mp3"),
+        "cache": Path("data/transcript_kenneth.json"),
+        "media_type": "audio/mpeg",
+        "center": {"lat": 38.2527, "lng": -85.7585},
+        "ems_units": [
+            {"id": "MEDIC-3", "lat": 38.2610, "lng": -85.7650, "status": "Available"},
+            {"id": "ENGINE-7", "lat": 38.2450, "lng": -85.7500, "status": "Available"},
+        ],
+    },
+    "wav2": {
+        "id": "covert-domestic",
+        "title": "Disguised Call — Caller May Not Be Able to Speak Freely",
+        "audio": Path("audio_callls/audio_wav2.mp4"),
+        "cache": Path("data/transcript.json"),
+        "media_type": "audio/mp4",
+        "center": {"lat": 33.749, "lng": -84.388},
+        "ems_units": [
+            {"id": "MEDIC-7", "lat": 33.7705, "lng": -84.3960, "status": "Available"},
+            {"id": "ENGINE-12", "lat": 33.7520, "lng": -84.3750, "status": "Available"},
+        ],
+    },
+}
+DEFAULT_DEMO = "kenneth"
 
-# OpenAI client lives for the lifetime of the server.
+
+def _demo(key):
+    return DEMOS.get(key, DEMOS[DEFAULT_DEMO])
+
+
 client = make_client()
 
 
 def diarize(texts):
-    """Label each transcript line as Dispatcher or Caller using the chat model."""
+    """Label each transcript line as Dispatcher or Caller."""
     if not texts:
         return []
 
@@ -76,20 +89,19 @@ def diarize(texts):
     ]
 
     def _ask(temperature):
-        resp = client.chat.completions.create(
-            model=CHAT_MODEL,
-            temperature=temperature,
-            response_format={"type": "json_object"},
-            messages=messages,
-        )
         try:
+            resp = client.chat.completions.create(
+                model=CHAT_MODEL,
+                temperature=temperature,
+                response_format={"type": "json_object"},
+                messages=messages,
+            )
             return json.loads(resp.choices[0].message.content).get("speakers", [])
-        except (json.JSONDecodeError, AttributeError, TypeError):
+        except Exception:  # noqa: BLE001
             return []
 
     speakers = _ask(0)
-    # Guard against a degenerate answer where every line gets the same label
-    # (the model occasionally collapses to all-"Caller"); retry with a nudge.
+    # Retry if the model collapsed every line to the same label.
     if len(set(speakers[: len(texts)])) < 2:
         speakers = _ask(0.4)
 
@@ -99,34 +111,42 @@ def diarize(texts):
     ]
 
 
-def load_transcript():
-    """Transcribe the real audio once (cached to disk) into transcript lines."""
-    if TRANSCRIPT_CACHE.exists():
-        return json.loads(TRANSCRIPT_CACHE.read_text(encoding="utf-8"))
+def load_transcript(demo):
+    """Transcribe a demo's audio into lines, cached to disk. Returns [] on failure
+    so startup never crashes when the API is unavailable."""
+    cache = demo["cache"]
+    if cache.exists():
+        return json.loads(cache.read_text(encoding="utf-8"))
 
-    segments = list(transcribe(client, TRANSCRIBE_MODEL, str(AUDIO_PATH)))
-    speakers = diarize([text for _, text in segments])
-    lines = [
-        {"id": i, "t": int(start), "speaker": speaker, "text": text}
-        for i, ((start, text), speaker) in enumerate(zip(segments, speakers), start=1)
-    ]
-    TRANSCRIPT_CACHE.parent.mkdir(parents=True, exist_ok=True)
-    TRANSCRIPT_CACHE.write_text(json.dumps(lines, indent=2), encoding="utf-8")
+    try:
+        segments = list(transcribe(client, TRANSCRIBE_MODEL, str(demo["audio"])))
+        speakers = diarize([text for _, text in segments])
+        lines = [
+            {"id": i, "t": int(start), "speaker": speaker, "text": text}
+            for i, ((start, text), speaker) in enumerate(zip(segments, speakers), start=1)
+        ]
+    except Exception:  # noqa: BLE001
+        return []
+
+    if lines:
+        cache.parent.mkdir(parents=True, exist_ok=True)
+        cache.write_text(json.dumps(lines, indent=2), encoding="utf-8")
     return lines
 
 
-# Transcribe the audio at startup (uses the cache on subsequent reloads).
-TRANSCRIPT = load_transcript()
+TRANSCRIPTS = {key: load_transcript(cfg) for key, cfg in DEMOS.items()}
 
 
-def build_lines():
-    """Attach deterministic rulebook tags to every transcribed line."""
-    return [{**line, "tags": rulebook_tags(line["text"])} for line in TRANSCRIPT]
-
+def build_lines(demo_key):
+    """Attach rulebook tags to every transcribed line."""
+    return [
+        {**line, "tags": rulebook_tags(line["text"])}
+        for line in TRANSCRIPTS.get(demo_key, [])
+    ]
 
 
 def collect_entities(lines):
-    """Group every extracted tag by its semantic category for the sidebar."""
+    """Group every tag by category, de-duplicated."""
     entities = {category: [] for category in CATEGORY_COLORS}
     seen = set()
     for line in lines:
@@ -150,23 +170,29 @@ def collect_entities(lines):
 
 
 @app.get("/api/scenario")
-def get_scenario():
-    lines = build_lines()
+def get_scenario(demo: str = DEFAULT_DEMO):
+    key = demo if demo in DEMOS else DEFAULT_DEMO
+    cfg = _demo(key)
+    lines = build_lines(key)
     return {
-        "id": SCENARIO["id"],
-        "title": SCENARIO["title"],
-        "center": SCENARIO["center"],
-        "ems_units": SCENARIO["ems_units"],
+        "id": cfg["id"],
+        "title": cfg["title"],
+        "center": cfg["center"],
+        "ems_units": cfg["ems_units"],
         "colors": CATEGORY_COLORS,
         "lines": lines,
+        "demo": key,
+        "demos": [{"key": k, "title": v["title"]} for k, v in DEMOS.items()],
     }
 
 
 @app.get("/api/export")
-def export_log():
-    lines = build_lines()
+def export_log(demo: str = DEFAULT_DEMO):
+    key = demo if demo in DEMOS else DEFAULT_DEMO
+    cfg = _demo(key)
+    lines = build_lines(key)
     return {
-        "scenario": SCENARIO["title"],
+        "scenario": cfg["title"],
         "transcript": [
             {"speaker": line["speaker"], "text": line["text"]} for line in lines
         ],
@@ -176,7 +202,7 @@ def export_log():
 
 @app.post("/api/tag")
 def tag_text(payload: dict):
-    """Tag an arbitrary transcript line live with the AAVE dispatch tagger."""
+    """Tag one transcript line with the live dialect agent."""
     text = (payload or {}).get("text", "")
     if not text.strip():
         return {"text": text, "tags": []}
@@ -184,16 +210,28 @@ def tag_text(payload: dict):
     return {"text": text, "tags": agent_tags(client, CHAT_MODEL, text)}
 
 
-_REPORT_FIELDS = ("location", "patient", "caller_action", "hazards", "summary", "priority")
+_AGENT_FIELDS = ("location", "patient", "caller_action", "hazards", "summary", "priority")
+
+
+def _clean_section(data, key):
+    section = data.get(key) if isinstance(data, dict) else None
+    if not isinstance(section, dict):
+        section = {}
+    return {k: str(section.get(k, "") or "").strip() for k in _AGENT_FIELDS}
 
 
 def generate_report(lines):
-    """Have the agent extract a structured incident report from the transcript.
-
-    `lines` is the portion of the call revealed so far, so the report fills in
-    progressively as the call streams. Only states what the transcript supports.
+    """Build two incident reports from the same transcript and compare them:
+    `agent` reads dialect correctly, `naive` is a standard-English reading.
+    `corrections` lists the dialect phrases the naive reading would misread.
     """
-    empty = {k: "" for k in _REPORT_FIELDS}
+    empty = {
+        "agent": {k: "" for k in _AGENT_FIELDS},
+        "naive": {k: "" for k in _AGENT_FIELDS},
+        "corrections": [],
+        "severity": "",
+        "under_triage": "",
+    }
     if not lines:
         return empty
 
@@ -204,57 +242,111 @@ def generate_report(lines):
         {
             "role": "system",
             "content": (
-                "You are a 911 dispatch assistant building a live incident "
-                "report from a partial call transcript. Extract ONLY what the "
-                "transcript supports — never invent details. Read AAVE / "
-                "Southern dialect correctly (e.g. 'fell out' = collapsed/"
-                "fainted, 'his sugar' = blood sugar / diabetic, 'finna' = about "
-                "to). Return ONLY JSON of the form "
-                '{"location": "", "patient": "", "caller_action": "", '
-                '"hazards": "", "summary": "", "priority": ""}.\n'
-                "Field guidance:\n"
-                "- location: address or place of the emergency.\n"
-                "- patient: chief complaint / patient condition (age, sex, "
-                "symptoms, consciousness).\n"
-                "- caller_action: what the caller is doing or has been "
-                "instructed to do (e.g. CPR in progress).\n"
-                "- hazards: scene hazards or safety concerns for responders.\n"
-                "- summary: one tight sentence a dispatcher can read at a "
-                "glance.\n"
-                "- priority: exactly one of low|moderate|high|critical.\n"
-                "Use an empty string for anything the transcript does not "
-                "state. Keep every field short — a phrase, not a paragraph."
+                "You analyze a partial 911 call transcript two different ways "
+                "and output a comparison a dispatcher can act on. Extract ONLY "
+                "what the transcript supports — never invent details.\n"
+                "Return ONLY JSON of the form:\n"
+                '{"agent": {"location": "", "patient": "", "caller_action": "", '
+                '"hazards": "", "summary": "", "priority": ""}, '
+                '"naive": {"location": "", "patient": "", "caller_action": "", '
+                '"hazards": "", "summary": "", "priority": ""}, '
+                '"corrections": [{"phrase": "", "misread": "", "actual": ""}], '
+                '"severity": "", "under_triage": ""}.\n'
+                "\n"
+                "'agent' = the report from a dispatcher who FULLY understands "
+                "African American Vernacular English (AAVE) and Southern / "
+                "regional dialect. Read dialect correctly (e.g. 'fell out' = "
+                "collapsed / fainted, 'his sugar' = blood sugar / diabetic "
+                "emergency, 'finna' = about to, habitual 'be', \"can't come "
+                "to\" = will not regain consciousness). Extract accurate, "
+                "complete details and set the correct priority.\n"
+                "\n"
+                "'naive' = the report a standard-English dispatcher with NO "
+                "dialect training would produce from the SAME words. They take "
+                "dialect literally or miss it entirely: they may not realize "
+                "'fell out' means collapsed, may miss the medical emergency, "
+                "and may under-prioritize or leave fields vague / blank. Be "
+                "realistic about what they would genuinely misunderstand.\n"
+                "\n"
+                "'corrections' = every AAVE / dialect phrase in the transcript "
+                "the naive dispatcher would misread. 'misread' = the wrong or "
+                "literal interpretation; 'actual' = the correct meaning. Only "
+                "include genuine dialect items actually present in the "
+                "transcript.\n"
+                "\n"
+                "'severity' = a short label for how serious this really is "
+                "(e.g. 'Life-threatening - possible cardiac / diabetic', "
+                "'Non-urgent').\n"
+                "\n"
+                "'under_triage' = a short note on what about THIS specific call "
+                "could cause a dispatcher or an AI to WRONGLY give it a lower "
+                "priority than it deserves - e.g. the caller sounds calm or "
+                "matter-of-fact, the emergency is phrased indirectly or "
+                "disguised, dialect could be misheard as non-urgent, or there "
+                "are no obvious alarm keywords. Empty string if nothing would "
+                "cause under-prioritization.\n"
+                "\n"
+                "priority for BOTH reports: exactly one of "
+                "low|moderate|high|critical. Use an empty string for anything "
+                "the transcript does not support. Keep every field short — a "
+                "phrase, not a paragraph."
             ),
         },
         {"role": "user", "content": transcript},
     ]
-    try:
-        resp = client.chat.completions.create(
-            model=CHAT_MODEL,
-            temperature=0,
-            response_format={"type": "json_object"},
-            messages=messages,
-        )
-        data = json.loads(resp.choices[0].message.content)
-    except (json.JSONDecodeError, AttributeError, TypeError, KeyError):
-        return empty
+    data = None
+    for attempt in range(3):
+        try:
+            resp = client.chat.completions.create(
+                model=CHAT_MODEL,
+                temperature=0,
+                response_format={"type": "json_object"},
+                messages=messages,
+            )
+            data = json.loads(resp.choices[0].message.content)
+            break
+        except Exception:  # noqa: BLE001
+            if attempt == 2:
+                return empty
+            time.sleep(1.5 * (attempt + 1))
 
-    return {k: str(data.get(k, "") or "").strip() for k in _REPORT_FIELDS}
+    corrections = []
+    for item in (data.get("corrections") or [])[:8]:
+        if not isinstance(item, dict):
+            continue
+        phrase = str(item.get("phrase", "") or "").strip()
+        if not phrase:
+            continue
+        corrections.append(
+            {
+                "phrase": phrase,
+                "misread": str(item.get("misread", "") or "").strip(),
+                "actual": str(item.get("actual", "") or "").strip(),
+            }
+        )
+
+    return {
+        "agent": _clean_section(data, "agent"),
+        "naive": _clean_section(data, "naive"),
+        "corrections": corrections,
+        "severity": str(data.get("severity", "") or "").strip(),
+        "under_triage": str(data.get("under_triage", "") or "").strip(),
+    }
 
 
 @app.post("/api/report")
 def make_report(payload: dict):
-    """Build a live structured incident report from the revealed transcript."""
     lines = (payload or {}).get("lines", [])
     return generate_report(lines)
 
 
-@app.get("/api/audio")
-def get_audio():
-    """Serve the raw 911 audio clip for playback in the UI."""
-    return FileResponse(str(AUDIO_PATH), media_type="audio/mp4")
+@app.get("/api/audio/{demo}")
+def get_audio(demo: str):
+    """Serve a demo's audio clip (path-based to avoid stale browser caching)."""
+    cfg = _demo(demo)
+    return FileResponse(str(cfg["audio"]), media_type=cfg["media_type"])
 
 
 @app.get("/")
 def root():
-    return {"service": "aegis-dispatch", "scenario": "/api/scenario", "docs": "/docs"}
+    return {"service": "truevoice", "scenario": "/api/scenario", "docs": "/docs"}

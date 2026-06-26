@@ -1,24 +1,8 @@
-"""
-DESCRIPTION:
-    Orchestrator for Aegis Dispatch. Streams a 911 transcript through the Azure
-    OpenAI tagger one line at a time — flagging the words that sound off in
-    terms of AAVE / Southern / regional dialect.
+"""Standalone CLI: stream a 911 transcript (canned scenario or an audio file)
+through the dialect tagger and print the tags.
 
-    The transcript is either the pre-loaded scenario (default) or the live
-    transcript of an audio clip via OpenAI Whisper speech-to-text (--audio).
-
-USAGE:
-    python main.py                      # stream the canned scenario
-    python main.py --audio call.mp3     # transcribe an audio clip, then stream
-
-    Before running:
-
-    pip install -r requirements.txt
-
-    Required environment variables (loaded from `.env` via `python-dotenv`):
-    1) OPENAI_API_KEY             - your OpenAI API key (sk-...).
-    2) OPENAI_CHAT_MODEL          - chat model (defaults to `gpt-4o`).
-    3) OPENAI_TRANSCRIBE_MODEL    - transcription model (only for --audio).
+    python main.py                   # canned scenario
+    python main.py --audio call.mp3  # transcribe an audio clip, then stream
 """
 
 import argparse

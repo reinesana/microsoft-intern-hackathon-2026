@@ -1,16 +1,17 @@
-// Thin client for the Aegis Dispatch FastAPI backend.
-// Vite proxies /api -> http://localhost:8000 (see vite.config.js).
+// API client for the TrueVoice backend. Vite proxies /api -> :8000.
 
 const BASE = '/api';
 
-export async function getScenario() {
-  const res = await fetch(`${BASE}/scenario`);
+export async function getScenario(demo) {
+  const qs = demo ? `?demo=${encodeURIComponent(demo)}` : '';
+  const res = await fetch(`${BASE}/scenario${qs}`);
   if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
   return res.json();
 }
 
-export async function getExport() {
-  const res = await fetch(`${BASE}/export`);
+export async function getExport(demo) {
+  const qs = demo ? `?demo=${encodeURIComponent(demo)}` : '';
+  const res = await fetch(`${BASE}/export${qs}`);
   if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
   return res.json();
 }
@@ -36,4 +37,21 @@ export async function getReport(lines) {
   });
   if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
   return res.json();
+}
+
+// Forward-geocode a free-text address to coordinates via OpenStreetMap's
+// public Nominatim service. Returns { lat, lng, label } or null if not found.
+export async function geocode(query) {
+  const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(
+    query,
+  )}`;
+  const res = await fetch(url, { headers: { Accept: 'application/json' } });
+  if (!res.ok) throw new Error(`geocode ${res.status}`);
+  const data = await res.json();
+  if (!Array.isArray(data) || data.length === 0) return null;
+  return {
+    lat: parseFloat(data[0].lat),
+    lng: parseFloat(data[0].lon),
+    label: data[0].display_name,
+  };
 }

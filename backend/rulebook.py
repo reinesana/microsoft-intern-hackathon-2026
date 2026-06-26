@@ -1,20 +1,6 @@
-"""
-DESCRIPTION:
-    Structured rulebook for the Aegis Dispatch NLP middleware.
-
-    Maps dialect markers, slang, and culturally-specific phrases (AAVE,
-    Southern, regional) to a plain-English meaning and a semantic category.
-    The category drives the tag color in the dispatcher UI. Phrases are matched
-    verbatim — the original transcript text is never rewritten.
-
-    Categories:
-        location  (blue)   - addresses / places
-        medical   (green)  - symptoms / medical state
-        intent    (purple) - actions / what someone is about to do
-        vehicle   (yellow) - vehicle or suspect descriptions
-
-USAGE:
-    from rulebook import RULEBOOK, ADDRESSES
+"""Rulebook of dialect/slang phrases → plain-English meaning + category, plus a
+small address→coordinates lookup. Phrases are matched verbatim; categories:
+location, medical, intent, vehicle.
 """
 
 # Phrase -> meaning + category. Keys are lowercase for case-insensitive lookup.

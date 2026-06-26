@@ -1,0 +1,296 @@
+[
+  {
+    "id": 1,
+    "t": 1,
+    "speaker": "Dispatcher",
+    "text": "9-1-1, Operator Harris, where is your emergency?"
+  },
+  {
+    "id": 2,
+    "t": 5,
+    "speaker": "Caller",
+    "text": "I don't, I don't know what's happening. Somebody kicked in the door and shot my girlfriend."
+  },
+  {
+    "id": 3,
+    "t": 11,
+    "speaker": "Dispatcher",
+    "text": "Okay, where are you located?"
+  },
+  {
+    "id": 4,
+    "t": 13,
+    "speaker": "Caller",
+    "text": "Oh, man, 3003 Springfield Drive, Apartment 4."
+  },
+  {
+    "id": 5,
+    "t": 17,
+    "speaker": "Dispatcher",
+    "text": "3003 Springfield Drive, Apartment Number 4?"
+  },
+  {
+    "id": 6,
+    "t": 20,
+    "speaker": "Caller",
+    "text": "Yes."
+  },
+  {
+    "id": 7,
+    "t": 22,
+    "speaker": "Caller",
+    "text": "Oh, my God."
+  },
+  {
+    "id": 8,
+    "t": 25,
+    "speaker": "Dispatcher",
+    "text": "Okay, how old is your girlfriend?"
+  },
+  {
+    "id": 9,
+    "t": 27,
+    "speaker": "Caller",
+    "text": "She's, she's, like, 26."
+  },
+  {
+    "id": 10,
+    "t": 32,
+    "speaker": "Caller",
+    "text": "Bring it. Oh, my God."
+  },
+  {
+    "id": 11,
+    "t": 34,
+    "speaker": "Dispatcher",
+    "text": "You said 26? Where was she shot at?"
+  },
+  {
+    "id": 12,
+    "t": 36,
+    "speaker": "Caller",
+    "text": "I don't know. She's on the ground right now. I don't know."
+  },
+  {
+    "id": 13,
+    "t": 41,
+    "speaker": "Caller",
+    "text": "I don't know."
+  },
+  {
+    "id": 14,
+    "t": 43,
+    "speaker": "Dispatcher",
+    "text": "Okay."
+  },
+  {
+    "id": 15,
+    "t": 44,
+    "speaker": "Caller",
+    "text": "I'm, I'm, I'm, uh."
+  },
+  {
+    "id": 16,
+    "t": 45,
+    "speaker": "Dispatcher",
+    "text": "You said she's 26? Is she alert and able to talk to you?"
+  },
+  {
+    "id": 17,
+    "t": 48,
+    "speaker": "Caller",
+    "text": "No, she's not. Bring it."
+  },
+  {
+    "id": 18,
+    "t": 51,
+    "speaker": "Caller",
+    "text": "God, I'm just..."
+  },
+  {
+    "id": 19,
+    "t": 56,
+    "speaker": "Dispatcher",
+    "text": "Okay, and you said you're in Apartment Number 4?"
+  },
+  {
+    "id": 20,
+    "t": 58,
+    "speaker": "Caller",
+    "text": "Hell, oh, my God. Yes, I am."
+  },
+  {
+    "id": 21,
+    "t": 62,
+    "speaker": "Dispatcher",
+    "text": "What's your name, sir?"
+  },
+  {
+    "id": 22,
+    "t": 64,
+    "speaker": "Caller",
+    "text": "Oh, my name is Kenneth Walker."
+  },
+  {
+    "id": 23,
+    "t": 66,
+    "speaker": "Dispatcher",
+    "text": "You said Kenneth?"
+  },
+  {
+    "id": 24,
+    "t": 67,
+    "speaker": "Caller",
+    "text": "Hell."
+  },
+  {
+    "id": 25,
+    "t": 68,
+    "speaker": "Dispatcher",
+    "text": "And you said she's 26?"
+  },
+  {
+    "id": 26,
+    "t": 70,
+    "speaker": "Caller",
+    "text": "Yes."
+  },
+  {
+    "id": 27,
+    "t": 71,
+    "speaker": "Dispatcher",
+    "text": "Okay, and you said 3003 Springfield Drive, Apartment Number 4?"
+  },
+  {
+    "id": 28,
+    "t": 75,
+    "speaker": "Caller",
+    "text": "Yes."
+  },
+  {
+    "id": 29,
+    "t": 77,
+    "speaker": "Dispatcher",
+    "text": "Okay."
+  },
+  {
+    "id": 30,
+    "t": 79,
+    "speaker": "Dispatcher",
+    "text": "Can you check and see where she's been shot at?"
+  },
+  {
+    "id": 31,
+    "t": 83,
+    "speaker": "Caller",
+    "text": "Okay."
+  },
+  {
+    "id": 32,
+    "t": 85,
+    "speaker": "Dispatcher",
+    "text": "Is she alert and able to talk to you?"
+  },
+  {
+    "id": 33,
+    "t": 88,
+    "speaker": "Caller",
+    "text": "No, bring it."
+  },
+  {
+    "id": 34,
+    "t": 90,
+    "speaker": "Dispatcher",
+    "text": "Okay."
+  },
+  {
+    "id": 35,
+    "t": 91,
+    "speaker": "Caller",
+    "text": "Oh, my God."
+  },
+  {
+    "id": 36,
+    "t": 93,
+    "speaker": "Caller",
+    "text": "Oh, my God."
+  },
+  {
+    "id": 37,
+    "t": 105,
+    "speaker": "Caller",
+    "text": "Oh, my God."
+  },
+  {
+    "id": 38,
+    "t": 110,
+    "speaker": "Caller",
+    "text": "Oh, my God."
+  },
+  {
+    "id": 39,
+    "t": 111,
+    "speaker": "Dispatcher",
+    "text": "Can you get her turned over on her back?"
+  },
+  {
+    "id": 40,
+    "t": 113,
+    "speaker": "Dispatcher",
+    "text": "I need you to check and see where she's been shot at."
+  },
+  {
+    "id": 41,
+    "t": 115,
+    "speaker": "Caller",
+    "text": "Oh, my God."
+  },
+  {
+    "id": 42,
+    "t": 118,
+    "speaker": "Caller",
+    "text": "Oh, my God."
+  },
+  {
+    "id": 43,
+    "t": 122,
+    "speaker": "Caller",
+    "text": "I'm going to go."
+  },
+  {
+    "id": 44,
+    "t": 123,
+    "speaker": "Dispatcher",
+    "text": "Okay."
+  },
+  {
+    "id": 45,
+    "t": 124,
+    "speaker": "Caller",
+    "text": "I'm going to go."
+  },
+  {
+    "id": 46,
+    "t": 125,
+    "speaker": "Dispatcher",
+    "text": "Kenneth?"
+  },
+  {
+    "id": 47,
+    "t": 127,
+    "speaker": "Dispatcher",
+    "text": "Kenneth, can you hear me?"
+  },
+  {
+    "id": 48,
+    "t": 130,
+    "speaker": "Caller",
+    "text": "Yes, I can hear you."
+  },
+  {
+    "id": 49,
+    "t": 160,
+    "speaker": "Dispatcher",
+    "text": "You have reached the voice mail..."
+  }
+]

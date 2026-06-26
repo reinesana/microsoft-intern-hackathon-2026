@@ -1,11 +1,5 @@
-"""
-DESCRIPTION:
-    The pre-loaded 911 scenario for the Aegis Dispatch demo. The frontend
-    streams these lines in one-by-one to simulate a live call. Text is verbatim
-    and intentionally contains dialect markers that the rulebook interprets.
-
-USAGE:
-    from scenario import SCENARIO
+"""Fallback 911 scenario used by the standalone CLI (main.py). The web app
+streams real transcribed audio instead.
 """
 
 # Initial map view (downtown Atlanta) before any address is extracted.

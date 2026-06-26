@@ -1,14 +1,5 @@
-"""
-DESCRIPTION:
-    Simple, non-destructive tagging for the Aegis Dispatch middleware.
-
-    `tag_line` scans a verbatim transcript line and returns a list of tags
-    (rulebook phrases + extracted addresses) with their character offsets so
-    the frontend can overlay interpretive pill-badges without altering the
-    original words.
-
-USAGE:
-    from tagging import tag_line
+"""Deterministic, non-destructive tagging. `tag_line` returns rulebook phrases
+and extracted addresses with character offsets, never altering the text.
 """
 
 import re
